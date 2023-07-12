@@ -13,9 +13,7 @@
 //	limitations under the License.
 
 //	TODO
-//	- DONE Add LUT for result calibration
-//	- DONE Add more testmodes
-//	- DONE Simulate logic
+//	- Simulate logic
 //	- Simulate mixed-signal
 
 `default_nettype none
@@ -30,7 +28,7 @@ module tt_um_tt04_hpretl_tempsens (
     input  wire [7:0] uio_in,   // IOs: Input path
     output wire [7:0] uio_out,  // IOs: Output path
     output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // will go high when the design is enabled
+    input  wire       ena,      // Will go high when the design is enabled
     input  wire       clk,      // clock
     input  wire       rst_n     // reset_n - low to reset
 );
@@ -38,176 +36,53 @@ module tt_um_tt04_hpretl_tempsens (
 	assign uio_oe = 8'b1;		// all IOs used as outputs
 
 	// size the design with these constants
-	localparam N_VDAC = 7;
-	localparam N_LUT = 7;
+	localparam N_VDAC = 7; // number of bits of voltage DAC
+	localparam N_LUT = 7; // wordsize of LUT (should match N_VDAC)
 	localparam N_CTR = 14; // 2**N_CTR gives roughly a second tick @ clk=10kHz
+	localparam N_PRECTR = 10; // Use a pre-counter if clk=10MHz
 
-	// pre-loaded LUT based on nominal simulation results; only even values div:2
-	// stored, otherwise does not fit the TinyTapeout area
-	localparam [(2**N_VDAC)*N_LUT:1] LUT_PRELOAD = {
-		// output	// input
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00,		//
-		7'd00		//
-	};
-
-	// definition of external inputs
+	// pre-loaded LUT based on nominal simulation results
+	`include "tempsens_precal.v"
+		
+	// definition of inputs
 	wire reset = ~rst_n;
 	wire cal_clk = ui_in[0];
 	wire cal_dat = ui_in[1];
 	wire cal_ena = ui_in[2];
+	wire use_prectr = ui_in[3];
 	wire [3:0] en_dbg = ui_in[7:4];
 
 	/* verilator lint_off UNUSEDSIGNAL */
-	wire dummy1 = ui_in[3];
-	wire dummy2 = |uio_in;
-	wire dummy3 = ena;
+	wire dummy1 = |uio_in;
+	wire dummy2 = ena;
 	/* verilator lint_on UNUSEDSIGNAL */
 
-	// definition of external outputs
+	// definition of outputs
 	wire [7:0] led_out;
 	wire [6:0] led_segments;
 	wire led_dot = show_ones;
 	assign uo_out[7:0] = led_out; 
 
-	// definition of internal wires and regs
+	// declaration of internal wires and regs
 	reg [N_CTR-1:0] ctr;
+	reg [N_PRECTR-1:0] prectr;
 	reg [N_VDAC-1:0] tempsens_res_raw;
 	wire [N_VDAC-1:0] tempsens_res;
 	reg temp_delay_last;
 	reg [(2**N_VDAC)*N_LUT:1] cal_lut;
 
+	// we use ctr as efficient state coder:
+	// 1:0 = measurement state
+	// N_VDAC+1:2 = value we set at DAC
+	// MSB:N_VDAC+2 = if at least one bit is set then in the idle period
+	// MSB of ctr switches the LED digit and the LED dot
 	wire [1:0] meas_state = ctr[1:0];
 	wire [N_VDAC-1:0] dac_value = {N_VDAC{1'b1}} - ctr[N_VDAC+1:2];
 	wire idle_cycle = |ctr[N_CTR-1:N_VDAC+2];
 	wire show_tens = ~ctr[N_CTR-1];
 	wire show_ones = ctr[N_CTR-1];
 
+	// state flags
 	wire in_reset, in_precharge, in_transition, in_transition_ph0, in_transition_ph1, in_measurement, in_evaluation;
 
     wire tempsens_en, temp_delay, tempsens_measure;
@@ -215,15 +90,17 @@ module tt_um_tt04_hpretl_tempsens (
 	wire [3:0] digit;
 
 
-	// debug vectors
-	wire [7:0] dbg1 = {temp_delay, in_reset, in_precharge, in_transition, in_transition_ph0, in_transition_ph1, in_measurement, in_evaluation};
-	wire [7:0] dbg2 = {1'b0, tempsens_dat}; 
-	wire [7:0] dbg3 = {1'b0, tempsens_res_raw};
-	wire [7:0] dbg4 = {ctr[7:0]};
-	wire [7:0] dbg5 = {2'b0, ctr[N_CTR-1:8]};
-	wire [7:0] dbg6 = {1'b0, dac_value};
-	wire [7:0] dbg7 = {1'b0, tempsens_res};
-	wire [7:0] dbg8 = {meas_state, cal_ena, tempsens_measure, tempsens_en, idle_cycle, show_ones, show_tens};
+	// assemble the debug vectors
+	wire [7:0] dbg01 = {temp_delay, in_reset, in_precharge, in_transition, in_transition_ph0, in_transition_ph1, in_measurement, in_evaluation};
+	wire [7:0] dbg02 = {1'b0, tempsens_dat}; 
+	wire [7:0] dbg03 = {1'b0, tempsens_res_raw};
+	wire [7:0] dbg04 = {ctr[7:0]};
+	wire [7:0] dbg05 = {2'b0, ctr[N_CTR-1:8]};
+	wire [7:0] dbg06 = {1'b0, dac_value};
+	wire [7:0] dbg07 = {1'b0, tempsens_res};
+	wire [7:0] dbg08 = {meas_state, cal_ena, tempsens_measure, tempsens_en, idle_cycle, show_ones, show_tens};
+	wire [7:0] dbg09 = {prectr[7:0]};
+	wire [7:0] dbg10 = {use_prectr,5'b0,prectr[N_PRECTR-1:8]};
 
 
 	// measurement state machine (meas_state)
@@ -266,31 +143,43 @@ module tt_um_tt04_hpretl_tempsens (
 
 	// display decimal number (tens or ones) on number LED; use new IO for debug signals
 	assign led_out = 	{led_dot, led_segments};
-	assign uio_out =	(en_dbg == 4'd0) ? {led_dot, led_segments} :	
-						(en_dbg == 4'd1) ? dbg1 :
-						(en_dbg == 4'd2) ? dbg2 :
-						(en_dbg == 4'd3) ? dbg3 :
-						(en_dbg == 4'd4) ? dbg4 :
-						(en_dbg == 4'd5) ? dbg5 :
-						(en_dbg == 4'd6) ? dbg6 :
-						(en_dbg == 4'd7) ? dbg7 :
-						(en_dbg == 4'd8) ? dbg8 :
+	assign uio_out =	(en_dbg == 4'd00) ? {led_dot, led_segments} :	
+						(en_dbg == 4'd01) ? dbg01 :
+						(en_dbg == 4'd02) ? dbg02 :
+						(en_dbg == 4'd03) ? dbg03 :
+						(en_dbg == 4'd04) ? dbg04 :
+						(en_dbg == 4'd05) ? dbg05 :
+						(en_dbg == 4'd06) ? dbg06 :
+						(en_dbg == 4'd07) ? dbg07 :
+						(en_dbg == 4'd08) ? dbg08 :
+						(en_dbg == 4'd09) ? dbg09 :
+						(en_dbg == 4'd10) ? dbg10 :
 						{led_dot, led_segments};
 	
 
-	// state machine implementation for temperature sensor control
+	// here we work on clk for temperature sensor control
     always @(posedge clk) begin
         if (reset) begin
 			ctr <= {N_CTR{1'b1}};
+			prectr <= {N_PRECTR{1'b1}};
 			tempsens_res_raw <= {N_VDAC{1'b0}};
 			temp_delay_last <= 1'b1;
 		end else begin
-			ctr <= ctr + 1'b1;
+			prectr <= prectr + 1'b1;
+			if (use_prectr)
+				if (prectr == {N_PRECTR{1'b0}})
+					// if we use a pre-counter, the counter only counts up
+					// when pre-counter overflows
+					ctr <= ctr + 1'b1;
+			else
+				// if we don't use a pre-counter, we count on every clk
+				ctr <= ctr + 1'b1;
 
 			if (in_evaluation) begin
-				if ((temp_delay_last == 1'b0) && (temp_delay == 1'b1)) begin
+				if ((temp_delay_last == 1'b0) && (temp_delay == 1'b1))
+					// we just saw a flip of the temperature-sensitive delay, so
+					// this is the DAC value we searched and is our result
 					tempsens_res_raw <= dac_value;
-				end
 
 				temp_delay_last <= temp_delay;
 			end
@@ -298,17 +187,18 @@ module tt_um_tt04_hpretl_tempsens (
 	end
 
 
-	// loading of calibration LUT
+	// loading of calibration LUT (pre-load with fixed values on reset)
 	always @(posedge cal_clk) begin
-		if (reset) begin
+		if (reset)
 			cal_lut <= LUT_PRELOAD;
-		end else begin
+		else
+			// we load the LUT serially as a giant shift register (to save pins)
 			cal_lut <= {cal_lut[((2**N_VDAC)*N_LUT)-1:1], cal_dat};
-		end
 	end
 
 
 	// assign wire array to LUT implemented a shift register (for easy load)
+	// with wire array using the LUT is easier
 	wire [N_LUT-1:0] cal_lut_entries[0:(2**N_VDAC)-1];
 	genvar i;
 	generate
@@ -316,6 +206,7 @@ module tt_um_tt04_hpretl_tempsens (
 			assign cal_lut_entries[i] = cal_lut[(N_LUT*(i+1)) -: N_LUT];
 		end
 	endgenerate
+
 
 	// apply calibration LUT when enabled
 	assign tempsens_res = cal_ena ? cal_lut_entries[tempsens_res_raw] : tempsens_res_raw;
