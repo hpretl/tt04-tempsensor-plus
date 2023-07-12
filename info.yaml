@@ -5,14 +5,14 @@ project:
 
 # If using an HDL, set wokwi_id as 0 and uncomment and list your source files here. 
 # Source files must be in ./src and you must list each source file separately
-  source_files:        
-    - hpretl_tt04_temperature_sensor.v
+  source_files:
+    - tt_um_tt04_hpretl_tempsens.v
     - tempsense.v
     - vdac.v
     - vdac_cell.v
     - bin2dec.v
     - seg7.v
-  top_module:  "hpretl_tt04_temperature_sensor"      # put the name of your top module here, make it unique by prepending your github username
+  top_module:  "tt_um_tt04_hpretl_tempsens"      # put the name of your top module here, make it unique by prepending your github username
 
 # How many tiles your design occupies? A single tile is about 167x108 uM.
 # Before changing this, please reach out to us on discord to discuss your design.

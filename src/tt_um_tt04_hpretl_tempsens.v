@@ -24,7 +24,7 @@
 `include "seg7.v"
 `include "bin2dec.v"
 
-module hpretl_tt04_temperature_sensor (
+module tt_um_hpretl_tt04_tempsens (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
@@ -345,4 +345,4 @@ module hpretl_tt04_temperature_sensor (
         .o_segments(led_segments)
     );
 
-endmodule // hpretl_tt04_temperature_sensor
+endmodule // tt_um_hpretl_tt04_tempsens
