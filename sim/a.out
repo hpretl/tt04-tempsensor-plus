@@ -1,0 +1,144 @@
+#! /opt/homebrew/Cellar/icarus-verilog/11.0/bin/vvp
+:ivl_version "11.0 (stable)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision - 9;
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/system.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/vhdl_sys.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/vhdl_textio.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/v2005_math.vpi";
+:vpi_module "/opt/homebrew/Cellar/icarus-verilog/11.0/lib/ivl/va_math.vpi";
+S_0x158e06fa0 .scope module, "tb_bin2dec" "tb_bin2dec" 2 6;
+ .timescale -6 -9;
+v0x600001c44e10_0 .var "BIN", 5 0;
+v0x600001c44ea0_0 .net "DEC", 3 0, L_0x600001f44280;  1 drivers
+v0x600001c44f30_0 .var "ONES", 0 0;
+v0x600001c44fc0_0 .var "TENS", 0 0;
+v0x600001c45050_0 .var/i "i", 31 0;
+S_0x158e04f30 .scope module, "b2d" "bin2dec" 2 33, 3 20 0, S_0x158e06fa0;
+ .timescale 0 0;
+    .port_info 0 /INPUT 6 "i_bin";
+    .port_info 1 /INPUT 1 "i_tens";
+    .port_info 2 /INPUT 1 "i_ones";
+    .port_info 3 /OUTPUT 4 "o_dec";
+L_0x150078010 .functor BUFT 1, C4<1>, C4<0>, C4<0>, C4<0>;
+L_0x600000544af0 .functor XNOR 1, v0x600001c44fc0_0, L_0x150078010, C4<0>, C4<0>;
+L_0x150078058 .functor BUFT 1, C4<1>, C4<0>, C4<0>, C4<0>;
+L_0x600000544b60 .functor XNOR 1, v0x600001c44f30_0, L_0x150078058, C4<0>, C4<0>;
+v0x600001c44630_0 .net/2u *"_ivl_0", 0 0, L_0x150078010;  1 drivers
+v0x600001c446c0_0 .net *"_ivl_11", 3 0, L_0x600001f44140;  1 drivers
+L_0x1500780a0 .functor BUFT 1, C4<1010>, C4<0>, C4<0>, C4<0>;
+v0x600001c44750_0 .net/2u *"_ivl_12", 3 0, L_0x1500780a0;  1 drivers
+v0x600001c447e0_0 .net *"_ivl_14", 3 0, L_0x600001f441e0;  1 drivers
+v0x600001c44870_0 .net *"_ivl_2", 0 0, L_0x600000544af0;  1 drivers
+v0x600001c44900_0 .net *"_ivl_5", 3 0, L_0x600001f440a0;  1 drivers
+v0x600001c44990_0 .net/2u *"_ivl_6", 0 0, L_0x150078058;  1 drivers
+v0x600001c44a20_0 .net *"_ivl_8", 0 0, L_0x600000544b60;  1 drivers
+v0x600001c44ab0_0 .var "bcd", 7 0;
+v0x600001c44b40_0 .var/i "i", 31 0;
+v0x600001c44bd0_0 .net "i_bin", 5 0, v0x600001c44e10_0;  1 drivers
+v0x600001c44c60_0 .net "i_ones", 0 0, v0x600001c44f30_0;  1 drivers
+v0x600001c44cf0_0 .net "i_tens", 0 0, v0x600001c44fc0_0;  1 drivers
+v0x600001c44d80_0 .net "o_dec", 3 0, L_0x600001f44280;  alias, 1 drivers
+E_0x600002046790 .event edge, v0x600001c44ab0_0, v0x600001c44bd0_0;
+L_0x600001f440a0 .part v0x600001c44ab0_0, 4, 4;
+L_0x600001f44140 .part v0x600001c44ab0_0, 0, 4;
+L_0x600001f441e0 .functor MUXZ 4, L_0x1500780a0, L_0x600001f44140, L_0x600000544b60, C4<>;
+L_0x600001f44280 .functor MUXZ 4, L_0x600001f441e0, L_0x600001f440a0, L_0x600000544af0, C4<>;
+    .scope S_0x158e04f30;
+T_0 ;
+    %wait E_0x600002046790;
+    %pushi/vec4 0, 0, 8;
+    %store/vec4 v0x600001c44ab0_0, 0, 8;
+    %pushi/vec4 0, 0, 32;
+    %store/vec4 v0x600001c44b40_0, 0, 32;
+T_0.0 ;
+    %load/vec4 v0x600001c44b40_0;
+    %cmpi/s 6, 0, 32;
+    %jmp/0xz T_0.1, 5;
+    %load/vec4 v0x600001c44ab0_0;
+    %parti/s 4, 0, 2;
+    %pad/u 32;
+    %cmpi/u 5, 0, 32;
+    %flag_inv 5; GE is !LT
+    %jmp/0xz  T_0.2, 5;
+    %load/vec4 v0x600001c44ab0_0;
+    %parti/s 4, 0, 2;
+    %addi 3, 0, 4;
+    %ix/load 4, 0, 0;
+    %flag_set/imm 4, 0;
+    %store/vec4 v0x600001c44ab0_0, 4, 4;
+T_0.2 ;
+    %load/vec4 v0x600001c44ab0_0;
+    %parti/s 4, 4, 4;
+    %pad/u 32;
+    %cmpi/u 5, 0, 32;
+    %flag_inv 5; GE is !LT
+    %jmp/0xz  T_0.4, 5;
+    %load/vec4 v0x600001c44ab0_0;
+    %parti/s 4, 4, 4;
+    %addi 3, 0, 4;
+    %ix/load 4, 4, 0;
+    %flag_set/imm 4, 0;
+    %store/vec4 v0x600001c44ab0_0, 4, 4;
+T_0.4 ;
+    %load/vec4 v0x600001c44ab0_0;
+    %parti/s 7, 0, 2;
+    %load/vec4 v0x600001c44bd0_0;
+    %pushi/vec4 5, 0, 32;
+    %load/vec4 v0x600001c44b40_0;
+    %sub;
+    %part/s 1;
+    %concat/vec4; draw_concat_vec4
+    %store/vec4 v0x600001c44ab0_0, 0, 8;
+    %load/vec4 v0x600001c44b40_0;
+    %addi 1, 0, 32;
+    %store/vec4 v0x600001c44b40_0, 0, 32;
+    %jmp T_0.0;
+T_0.1 ;
+    %jmp T_0;
+    .thread T_0, $push;
+    .scope S_0x158e06fa0;
+T_1 ;
+    %pushi/vec4 1, 0, 1;
+    %store/vec4 v0x600001c44f30_0, 0, 1;
+    %pushi/vec4 0, 0, 1;
+    %store/vec4 v0x600001c44fc0_0, 0, 1;
+    %end;
+    .thread T_1;
+    .scope S_0x158e06fa0;
+T_2 ;
+    %vpi_call 2 15 "$dumpfile", "tb_bin2dec.vcd" {0 0 0};
+    %vpi_call 2 16 "$dumpvars", 32'sb00000000000000000000000000000000, S_0x158e06fa0 {0 0 0};
+    %pushi/vec4 0, 0, 32;
+    %store/vec4 v0x600001c45050_0, 0, 32;
+T_2.0 ;
+    %load/vec4 v0x600001c45050_0;
+    %cmpi/s 100, 0, 32;
+    %jmp/0xz T_2.1, 5;
+    %load/vec4 v0x600001c45050_0;
+    %pad/s 6;
+    %store/vec4 v0x600001c44e10_0, 0, 6;
+    %delay 1000, 0;
+    %pushi/vec4 1, 0, 1;
+    %store/vec4 v0x600001c44fc0_0, 0, 1;
+    %pushi/vec4 0, 0, 1;
+    %store/vec4 v0x600001c44f30_0, 0, 1;
+    %delay 1000, 0;
+    %pushi/vec4 0, 0, 1;
+    %store/vec4 v0x600001c44fc0_0, 0, 1;
+    %pushi/vec4 1, 0, 1;
+    %store/vec4 v0x600001c44f30_0, 0, 1;
+    %load/vec4 v0x600001c45050_0;
+    %addi 1, 0, 32;
+    %store/vec4 v0x600001c45050_0, 0, 32;
+    %jmp T_2.0;
+T_2.1 ;
+    %vpi_call 2 28 "$finish" {0 0 0};
+    %end;
+    .thread T_2;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "tb_bin2dec.v";
+    "../src/bin2dec.v";
